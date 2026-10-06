@@ -55,9 +55,9 @@
       font-size: 24px;
     }
 
-    /* -----------------------
+    /* =========================
        WHEEL
-    ----------------------- */
+    ========================= */
 
     .wheel-wrapper {
       position: relative;
@@ -70,6 +70,24 @@
       position: absolute;
       inset: 0;
       border-radius: 50%;
+
+      /*
+        IMPORTANT:
+
+        Conic gradient starts at TOP.
+
+        RED:
+        0° - 120°
+        PAUSSY
+
+        PURPLE:
+        120° - 240°
+        GAY
+
+        GREEN:
+        240° - 360°
+        FOOTBALL LEGEND
+      */
 
       background: conic-gradient(
         #ff3b3b 0deg 120deg,
@@ -84,7 +102,7 @@
         0 0 40px rgba(255, 222, 0, .25);
     }
 
-    /* Wheel continuously spins before answer */
+    /* Continuous spinning */
 
     .wheel.idle {
       animation: idleSpin 4s linear infinite;
@@ -100,7 +118,7 @@
       }
     }
 
-    /* Segment lines */
+    /* Section separator lines */
 
     .wheel::before {
       content: "";
@@ -146,7 +164,7 @@
       transform: rotate(-60deg);
     }
 
-    /* Center */
+    /* Wheel center */
 
     .center {
       position: absolute;
@@ -169,7 +187,7 @@
       font-size: 30px;
     }
 
-    /* Pointer */
+    /* Fixed pointer */
 
     .pointer {
       position: absolute;
@@ -188,9 +206,9 @@
       filter: drop-shadow(0 4px 3px #000);
     }
 
-    /* -----------------------
+    /* =========================
        BUTTONS
-    ----------------------- */
+    ========================= */
 
     .buttons {
       display: flex;
@@ -235,9 +253,9 @@
       color: white;
     }
 
-    /* -----------------------
+    /* =========================
        RESULT
-    ----------------------- */
+    ========================= */
 
     .result {
       min-height: 70px;
@@ -256,6 +274,7 @@
     }
 
     @keyframes resultPop {
+
       0% {
         transform: scale(.3) rotate(-8deg);
         opacity: 0;
@@ -289,19 +308,37 @@
       font-size: 11px;
     }
 
-    /* Shake effect */
+    /* Shake */
 
     .shake {
       animation: shake .45s;
     }
 
     @keyframes shake {
-      0% { transform: translate(0); }
-      20% { transform: translate(-8px, 4px); }
-      40% { transform: translate(8px, -4px); }
-      60% { transform: translate(-6px, 2px); }
-      80% { transform: translate(6px, -2px); }
-      100% { transform: translate(0); }
+
+      0% {
+        transform: translate(0);
+      }
+
+      20% {
+        transform: translate(-8px, 4px);
+      }
+
+      40% {
+        transform: translate(8px, -4px);
+      }
+
+      60% {
+        transform: translate(-6px, 2px);
+      }
+
+      80% {
+        transform: translate(6px, -2px);
+      }
+
+      100% {
+        transform: translate(0);
+      }
     }
 
     @media (max-width: 500px) {
@@ -326,6 +363,7 @@
   </style>
 </head>
 
+
 <body>
 
 <div class="container" id="container">
@@ -339,6 +377,7 @@
   <h2>
     Are you playing Thursday night football?
   </h2>
+
 
   <div class="wheel-wrapper">
 
@@ -366,19 +405,29 @@
 
   </div>
 
+
   <div class="buttons" id="buttons">
 
-    <button class="yes" onclick="answerYes()">
+    <button
+      class="yes"
+      onclick="answerYes()">
       YES ⚽
     </button>
 
-    <button class="no" onclick="answerNo()">
+    <button
+      class="no"
+      onclick="answerNo()">
       NO
     </button>
 
   </div>
 
-  <div class="result" id="result"></div>
+
+  <div
+    class="result"
+    id="result">
+  </div>
+
 
   <button
     class="again hidden"
@@ -386,6 +435,7 @@
     onclick="resetGame()">
     TRY AGAIN
   </button>
+
 
   <div class="footer">
     Scientifically inaccurate. Footballistically correct.
@@ -396,104 +446,263 @@
 
 <script>
 
-  const wheel = document.getElementById("wheel");
-  const result = document.getElementById("result");
-  const buttons = document.getElementById("buttons");
-  const again = document.getElementById("again");
-  const container = document.getElementById("container");
+  const wheel =
+    document.getElementById("wheel");
+
+  const result =
+    document.getElementById("result");
+
+  const buttons =
+    document.getElementById("buttons");
+
+  const again =
+    document.getElementById("again");
+
+  const container =
+    document.getElementById("container");
+
 
   let spinning = false;
 
 
   /*
-   * Stop continuous rotation and
-   * perform the final dramatic spin.
-   */
+   ==============================
+   RESULT POSITIONS
+   ==============================
 
-  function spinTo(targetAngle, callback) {
+   These are the CENTER angles of
+   the three sections.
 
-    if (spinning) return;
+   PAUSSY:
+   segment center = 60°
 
-    spinning = true;
+   GAY:
+   segment center = 180°
 
-    buttons.style.pointerEvents = "none";
+   FOOTBALL:
+   segment center = 300°
 
-    /*
-     * Get current visible wheel angle
-     * before removing continuous animation.
-     */
+   Because the POINTER stays at 0°
+   at the top, we rotate the wheel
+   in the OPPOSITE direction.
 
-    const computedStyle =
+   Therefore:
+
+   PAUSSY -> rotation 300°
+   GAY -> rotation 180°
+   FOOTBALL -> rotation 60°
+  */
+
+
+  const positions = {
+
+    paussy: 300,
+
+    gay: 180,
+
+    football: 60
+
+  };
+
+
+  /*
+   Get current visual rotation
+  */
+
+  function getCurrentRotation() {
+
+    const style =
       window.getComputedStyle(wheel);
 
     const transform =
-      computedStyle.transform;
+      style.transform;
 
-    let currentAngle = 0;
 
-    if (transform && transform !== "none") {
+    if (
+      !transform ||
+      transform === "none"
+    ) {
 
-      const values =
-        transform.match(/matrix\((.+)\)/);
+      return 0;
 
-      if (values) {
-
-        const parts =
-          values[1].split(",");
-
-        const a = parseFloat(parts[0]);
-        const b = parseFloat(parts[1]);
-
-        currentAngle =
-          Math.atan2(b, a) *
-          (180 / Math.PI);
-
-        if (currentAngle < 0) {
-          currentAngle += 360;
-        }
-      }
     }
 
+
+    const values =
+      transform.match(
+        /matrix\((.+)\)/
+      );
+
+
+    if (!values) {
+
+      return 0;
+
+    }
+
+
+    const parts =
+      values[1].split(",");
+
+
+    const a =
+      parseFloat(parts[0]);
+
+    const b =
+      parseFloat(parts[1]);
+
+
+    let angle =
+      Math.atan2(b, a) *
+      (180 / Math.PI);
+
+
+    if (angle < 0) {
+
+      angle += 360;
+
+    }
+
+
+    return angle;
+
+  }
+
+
+  /*
+   Spin to selected result
+  */
+
+  function spinToResult(
+    resultType,
+    callback
+  ) {
+
+    if (spinning) {
+
+      return;
+
+    }
+
+
+    spinning = true;
+
+    buttons.style.pointerEvents =
+      "none";
+
+
     /*
-     * Remove idle animation but keep
-     * wheel visually in same position.
-     */
+     Capture current angle while
+     idle animation is running.
+    */
+
+    const currentAngle =
+      getCurrentRotation();
+
+
+    /*
+     Stop idle animation.
+    */
 
     wheel.classList.remove("idle");
+
 
     wheel.style.transform =
       `rotate(${currentAngle}deg)`;
 
+
+    wheel.style.transition =
+      "none";
+
+
     /*
-     * Force browser to register position.
-     */
+     Force browser refresh
+    */
 
     void wheel.offsetWidth;
 
-    /*
-     * Final spin
-     */
 
-    wheel.style.transition =
-      "transform 4.5s cubic-bezier(.12,.72,.15,1)";
+    /*
+     Desired final wheel angle.
+    */
+
+    const desiredAngle =
+      positions[resultType];
+
+
+    /*
+     Calculate how far we need
+     to rotate from current angle
+     to desired angle.
+    */
+
+    let difference =
+      desiredAngle -
+      currentAngle;
+
+
+    if (difference < 0) {
+
+      difference += 360;
+
+    }
+
+
+    /*
+     Add several full rotations.
+    */
 
     const extraSpins =
-      5 + Math.floor(Math.random() * 3);
+      5 +
+      Math.floor(
+        Math.random() * 3
+      );
+
+
+    /*
+     Tiny randomness INSIDE
+     the selected section.
+
+     Maximum +/- 25 degrees means
+     it stays well away from borders.
+    */
+
+    const landingVariation =
+      Math.floor(
+        Math.random() * 51
+      ) - 25;
+
 
     const finalRotation =
       currentAngle +
       (extraSpins * 360) +
-      targetAngle;
+      difference +
+      landingVariation;
+
+
+    /*
+     Start dramatic slowdown.
+    */
+
+    wheel.style.transition =
+      "transform 4.5s cubic-bezier(.12,.72,.15,1)";
+
 
     wheel.style.transform =
       `rotate(${finalRotation}deg)`;
 
 
+    /*
+     Reveal result after wheel stops.
+    */
+
     setTimeout(() => {
 
       spinning = false;
 
-      buttons.classList.add("hidden");
+      buttons.classList.add(
+        "hidden"
+      );
 
       callback();
 
@@ -503,52 +712,61 @@
 
 
   /*
-   * YES
-   *
-   * Always gives the football result.
-   */
+   ==============================
+   YES
+   ==============================
+  */
 
   function answerYes() {
 
     result.textContent =
       "CALCULATING FOOTBALL LEVEL...";
 
-    const target =
-      60 + Math.floor(Math.random() * 30);
 
-    spinTo(target, () => {
+    spinToResult(
+      "football",
+      () => {
 
-      showResult(
-        "GREAT! SEE YOU ON THE PITCH ⚽🔥"
-      );
+        showResult(
+          "GREAT! SEE YOU ON THE PITCH ⚽🔥"
+        );
 
-      confetti();
+        confetti();
 
-    });
+      }
+    );
 
   }
 
 
   /*
-   * NO
-   *
-   * Randomly chooses between
-   * the two joke results.
-   */
+   ==============================
+   NO
+   ==============================
+  */
 
   function answerNo() {
 
     result.textContent =
       "ANALYSING EXCUSE...";
 
-    const random =
-      Math.random() < 0.5;
 
-    if (random) {
+    /*
+     Random 50 / 50 result.
+    */
 
-      spinTo(
-        300 + Math.floor(Math.random() * 30),
+    const selectedResult =
+      Math.random() < 0.5
+        ? "paussy"
+        : "gay";
 
+
+    if (
+      selectedResult === "paussy"
+    ) {
+
+      spinToResult(
+        "paussy",
         () => {
 
           showResult(
@@ -564,9 +782,8 @@
 
     else {
 
-      spinTo(
-        180 + Math.floor(Math.random() * 30),
-
+      spinToResult(
+        "gay",
         () => {
 
           showResult(
@@ -584,82 +801,140 @@
 
 
   /*
-   * Display result
-   */
+   Show text result
+  */
 
   function showResult(text) {
 
-    result.textContent = text;
+    result.textContent =
+      text;
 
-    result.classList.remove("show");
+
+    result.classList.remove(
+      "show"
+    );
+
 
     void result.offsetWidth;
 
-    result.classList.add("show");
 
-    again.classList.remove("hidden");
+    result.classList.add(
+      "show"
+    );
+
+
+    again.classList.remove(
+      "hidden"
+    );
 
   }
 
 
   /*
-   * Screen shake
-   */
+   Shake effect
+  */
 
   function shakeScreen() {
 
-    container.classList.remove("shake");
+    container.classList.remove(
+      "shake"
+    );
+
 
     void container.offsetWidth;
 
-    container.classList.add("shake");
+
+    container.classList.add(
+      "shake"
+    );
 
   }
 
 
   /*
-   * Confetti for YES
-   */
+   Confetti
+  */
 
   function confetti() {
 
-    for (let i = 0; i < 50; i++) {
+    for (
+      let i = 0;
+      i < 50;
+      i++
+    ) {
 
       const piece =
-        document.createElement("div");
+        document.createElement(
+          "div"
+        );
 
-      piece.style.position = "fixed";
+
+      piece.style.position =
+        "fixed";
+
 
       piece.style.left =
-        Math.random() * 100 + "vw";
+        Math.random() *
+        100 +
+        "vw";
 
-      piece.style.top = "-20px";
 
-      piece.style.width = "8px";
-      piece.style.height = "15px";
+      piece.style.top =
+        "-20px";
+
+
+      piece.style.width =
+        "8px";
+
+
+      piece.style.height =
+        "15px";
+
 
       piece.style.background =
-        `hsl(${Math.random() * 360},100%,50%)`;
+        `hsl(${
+          Math.random() * 360
+        },100%,50%)`;
 
-      piece.style.zIndex = "9999";
+
+      piece.style.zIndex =
+        "9999";
+
 
       piece.style.transform =
-        `rotate(${Math.random() * 360}deg)`;
+        `rotate(${
+          Math.random() * 360
+        }deg)`;
+
 
       piece.style.transition =
-        `top ${2 + Math.random() * 2}s linear,
-         transform ${2 + Math.random() * 2}s linear`;
+        `top ${
+          2 + Math.random() * 2
+        }s linear,
+        transform ${
+          2 + Math.random() * 2
+        }s linear`;
 
-      document.body.appendChild(piece);
+
+      document.body.appendChild(
+        piece
+      );
+
 
       setTimeout(() => {
 
-        piece.style.top = "110vh";
+        piece.style.top =
+          "110vh";
+
 
         piece.style.transform =
-          `rotate(${720 + Math.random() * 720}deg)`;
+          `rotate(${
+            720 +
+            Math.random() * 720
+          }deg)`;
 
       }, 20);
+
 
       setTimeout(() => {
 
@@ -673,32 +948,58 @@
 
 
   /*
-   * Restart
-   */
+   ==============================
+   TRY AGAIN
+   ==============================
+  */
 
   function resetGame() {
 
-    result.textContent = "";
+    result.textContent =
+      "";
 
-    result.classList.remove("show");
 
-    buttons.classList.remove("hidden");
+    result.classList.remove(
+      "show"
+    );
 
-    buttons.style.pointerEvents = "auto";
 
-    again.classList.add("hidden");
+    buttons.classList.remove(
+      "hidden"
+    );
+
+
+    buttons.style.pointerEvents =
+      "auto";
+
+
+    again.classList.add(
+      "hidden"
+    );
+
 
     /*
-     * Remove result-spin transition
-     * and start continuous rotation again.
-     */
+     Remove final-spin settings.
+    */
 
-    wheel.style.transition = "none";
-    wheel.style.transform = "";
+    wheel.style.transition =
+      "none";
+
+
+    wheel.style.transform =
+      "";
+
 
     void wheel.offsetWidth;
 
-    wheel.classList.add("idle");
+
+    /*
+     Start endless spinning again.
+    */
+
+    wheel.classList.add(
+      "idle"
+    );
 
   }
 
