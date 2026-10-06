@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>PAUSSYMETER ⚽</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background:
+        radial-gradient(circle at center, #242424 0%, #111 60%, #050505 100%);
+      color: white;
+      font-family: Arial, Helvetica, sans-serif;
+      text-align: center;
+      overflow-x: hidden;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 650px;
+      padding: 25px;
+    }
+
+    h1 {
+      font-size: clamp(42px, 9vw, 76px);
+      margin: 0;
+      font-weight: 900;
+      letter-spacing: -3px;
+      color: #ffde00;
+      text-shadow:
+        3px 3px 0 #ff3b3b,
+        6px 6px 0 #000;
+    }
+
+    .subtitle {
+      margin-top: 5px;
+      color: #aaa;
+      font-weight: bold;
+      letter-spacing: 3px;
+      font-size: 12px;
+    }
+
+    h2 {
+      margin: 30px 0 20px;
+      font-size: 24px;
+    }
+
+    /* -----------------------
+       WHEEL
+    ----------------------- */
+
+    .wheel-wrapper {
+      position: relative;
+      width: min(82vw, 430px);
+      height: min(82vw, 430px);
+      margin: 20px auto 30px;
+    }
+
+    .wheel {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+
+      /*
+        Three equal sections:
+        0-120   PAUSSY
+        120-240 GAY
+        240-360 FOOTBALL
+      */
+      background: conic-gradient(
+        #ff3b3b 0deg 120deg,
+        #9c27ff 120deg 240deg,
+        #16c784 240deg 360deg
+      );
+
+      border: 10px solid white;
+
+      box-shadow:
+        0 0 0 5px #111,
+        0 0 40px rgba(255, 222, 0, .25);
+
+      transition:
+        transform 4.5s cubic-bezier(.12,.72,.15,1);
+    }
+
+    /* lines separating the segments */
+
+    .wheel::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+
+      background:
+        conic-gradient(
+          transparent 0deg 119deg,
+          white 119deg 121deg,
+          transparent 121deg 239deg,
+          white 239deg 241deg,
+          transparent 241deg 359deg,
+          white 359deg 360deg
+        );
+    }
+
+    .label {
+      position: absolute;
+      width: 140px;
+      font-size: 20px;
+      font-weight: 900;
+      text-shadow: 2px 2px 3px #000;
+      z-index: 2;
+    }
+
+    .label1 {
+      top: 24%;
+      right: 6%;
+      transform: rotate(60deg);
+    }
+
+    .label2 {
+      bottom: 15%;
+      left: 28%;
+      transform: rotate(180deg);
+    }
+
+    .label3 {
+      top: 24%;
+      left: 3%;
+      transform: rotate(-60deg);
+    }
+
+    /* center */
+
+    .center {
+      position: absolute;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: #111;
+      border: 6px solid white;
+
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+
+      z-index: 10;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-size: 30px;
+    }
+
+    /* POINTER */
+
+    .pointer {
+      position: absolute;
+      top: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 20;
+
+      width: 0;
+      height: 0;
+
+      border-left: 22px solid transparent;
+      border-right: 22px solid transparent;
+      border-top: 55px solid #ffde00;
+
+      filter: drop-shadow(0 4px 3px #000);
+    }
+
+    /* -----------------------
+       BUTTONS
+    ----------------------- */
+
+    .buttons {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 17px 38px;
+
+      font-size: 20px;
+      font-weight: 900;
+
+      cursor: pointer;
+
+      transition:
+        transform .15s,
+        filter .15s;
+
+      box-shadow: 0 7px 0 rgba(0,0,0,.45);
+    }
+
+    button:hover {
+      transform: translateY(-2px) scale(1.04);
+      filter: brightness(1.1);
+    }
+
+    button:active {
+      transform: translateY(4px);
+      box-shadow: 0 2px 0 rgba(0,0,0,.45);
+    }
+
+    .yes {
+      background: #16c784;
+      color: white;
+    }
+
+    .no {
+      background: #ff3b3b;
+      color: white;
+    }
+
+    /* -----------------------
+       RESULT
+    ----------------------- */
+
+    .result {
+      min-height: 70px;
+      margin-top: 25px;
+
+      font-size: clamp(25px, 6vw, 42px);
+      font-weight: 900;
+
+      color: #ffde00;
+
+      text-shadow: 3px 3px 0 #000;
+    }
+
+    .result.show {
+      animation: resultPop .6s ease;
+    }
+
+    @keyframes resultPop {
+      0% {
+        transform: scale(.3) rotate(-8deg);
+        opacity: 0;
+      }
+
+      60% {
+        transform: scale(1.25) rotate(3deg);
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .again {
+      margin-top: 15px;
+      background: #ffde00;
+      color: #111;
+      font-size: 16px;
+      padding: 13px 25px;
+    }
+
+    .footer {
+      margin-top: 30px;
+      color: #555;
+      font-size: 11px;
+    }
+
+    /* Screen shake when NO wins */
+
+    .shake {
+      animation: shake .45s;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0); }
+      20% { transform: translate(-8px, 4px); }
+      40% { transform: translate(8px, -4px); }
+      60% { transform: translate(-6px, 2px); }
+      80% { transform: translate(6px, -2px); }
+      100% { transform: translate(0); }
+    }
+
+    @media (max-width: 500px) {
+
+      .container {
+        padding: 15px;
+      }
+
+      h2 {
+        font-size: 19px;
+      }
+
+      .label {
+        font-size: 15px;
+        width: 110px;
+      }
+
+      button {
+        padding: 15px 28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container" id="container">
+
+  <h1>PAUSSYMETER</h1>
+  <div class="subtitle">THURSDAY FOOTBALL DETECTOR 3000</div>
+
+  <h2>Are you playing Thursday night football?</h2>
+
+  <div class="wheel-wrapper">
+
+    <div class="pointer"></div>
+
+    <div class="wheel" id="wheel">
+
+      <div class="label label1">
+        YOU ARE<br>PAUSSY
+      </div>
+
+      <div class="label label2">
+        YOU ARE<br>GAY
+      </div>
+
+      <div class="label label3">
+        ⚽ FOOTBALL<br>LEGEND
+      </div>
+
+      <div class="center">
+        ⚽
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="buttons" id="buttons">
+
+    <button class="yes" onclick="answerYes()">
+      YES ⚽
+    </button>
+
+    <button class="no" onclick="answerNo()">
+      NO
+    </button>
+
+  </div>
+
+  <div class="result" id="result"></div>
+
+  <button
+    class="again hidden"
+    id="again"
+    onclick="resetGame()">
+    TRY AGAIN
+  </button>
+
+  <div class="footer">
+    Scientifically inaccurate. Footballistically correct.
+  </div>
+
+</div>
+
+
+<script>
+
+  const wheel = document.getElementById("wheel");
+  const result = document.getElementById("result");
+  const buttons = document.getElementById("buttons");
+  const again = document.getElementById("again");
+  const container = document.getElementById("container");
+
+  let currentRotation = 0;
+  let spinning = false;
+
+
+  /*
+   * Spin to a target angle.
+   *
+   * Several complete rotations are added
+   * so the wheel has a dramatic spin.
+   */
+
+  function spinTo(targetAngle, callback) {
+
+    if (spinning) return;
+
+    spinning = true;
+
+    buttons.style.pointerEvents = "none";
+
+    const extraSpins =
+      5 + Math.floor(Math.random() * 3);
+
+    currentRotation +=
+      (extraSpins * 360) +
+      targetAngle;
+
+    wheel.style.transform =
+      `rotate(${currentRotation}deg)`;
+
+    setTimeout(() => {
+
+      spinning = false;
+
+      buttons.classList.add("hidden");
+
+      callback();
+
+    }, 4600);
+
+  }
+
+
+  /*
+   * YES
+   *
+   * Always lands on the football section.
+   */
+
+  function answerYes() {
+
+    result.textContent =
+      "CALCULATING FOOTBALL LEVEL...";
+
+    /*
+      Add a little randomness inside
+      the winning section.
+    */
+
+    const target =
+      60 + Math.floor(Math.random() * 35);
+
+    spinTo(target, () => {
+
+      showResult(
+        "GREAT! SEE YOU ON THE PITCH ⚽🔥"
+      );
+
+      confetti();
+
+    });
+
+  }
+
+
+  /*
+   * NO
+   *
+   * Randomly choose one of
+   * the two joke outcomes.
+   */
+
+  function answerNo() {
+
+    result.textContent =
+      "ANALYSING EXCUSE...";
+
+    const random =
+      Math.random() < 0.5;
+
+    if (random) {
+
+      /*
+        PAUSSY section
+      */
+
+      spinTo(
+        300 + Math.floor(Math.random() * 30),
+        () => {
+
+          showResult(
+            "RESULT: YOU ARE PAUSSY 😭"
+          );
+
+          shakeScreen();
+
+        }
+      );
+
+    }
+
+    else {
+
+      /*
+        Second joke section
+      */
+
+      spinTo(
+        180 + Math.floor(Math.random() * 30),
+        () => {
+
+          showResult(
+            "RESULT: YOU ARE GAY 🌈"
+          );
+
+          shakeScreen();
+
+        }
+      );
+
+    }
+
+  }
+
+
+  function showResult(text) {
+
+    result.textContent = text;
+
+    result.classList.remove("show");
+
+    void result.offsetWidth;
+
+    result.classList.add("show");
+
+    again.classList.remove("hidden");
+
+  }
+
+
+  function shakeScreen() {
+
+    container.classList.remove("shake");
+
+    void container.offsetWidth;
+
+    container.classList.add("shake");
+
+  }
+
+
+  /*
+   * Tiny fake confetti
+   */
+
+  function confetti() {
+
+    for (let i = 0; i < 50; i++) {
+
+      const piece =
+        document.createElement("div");
+
+      piece.style.position = "fixed";
+
+      piece.style.left =
+        Math.random() * 100 + "vw";
+
+      piece.style.top = "-20px";
+
+      piece.style.width = "8px";
+      piece.style.height = "15px";
+
+      piece.style.background =
+        `hsl(${Math.random()*360},100%,50%)`;
+
+      piece.style.zIndex = "9999";
+
+      piece.style.transform =
+        `rotate(${Math.random()*360}deg)`;
+
+      piece.style.transition =
+        `top ${2 + Math.random()*2}s linear,
+         transform ${2 + Math.random()*2}s linear`;
+
+      document.body.appendChild(piece);
+
+      setTimeout(() => {
+
+        piece.style.top = "110vh";
+
+        piece.style.transform =
+          `rotate(${720 + Math.random()*720}deg)`;
+
+      }, 20);
+
+      setTimeout(() => {
+        piece.remove();
+      }, 4500);
+
+    }
+
+  }
+
+
+  function resetGame() {
+
+    result.textContent = "";
+
+    result.classList.remove("show");
+
+    buttons.classList.remove("hidden");
+
+    buttons.style.pointerEvents = "auto";
+
+    again.classList.add("hidden");
+
+  }
+
+</script>
+
+</body>
+</html>
