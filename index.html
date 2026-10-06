@@ -71,12 +71,6 @@
       inset: 0;
       border-radius: 50%;
 
-      /*
-        Three equal sections:
-        0-120   PAUSSY
-        120-240 GAY
-        240-360 FOOTBALL
-      */
       background: conic-gradient(
         #ff3b3b 0deg 120deg,
         #9c27ff 120deg 240deg,
@@ -88,12 +82,25 @@
       box-shadow:
         0 0 0 5px #111,
         0 0 40px rgba(255, 222, 0, .25);
-
-      transition:
-        transform 4.5s cubic-bezier(.12,.72,.15,1);
     }
 
-    /* lines separating the segments */
+    /* Wheel continuously spins before answer */
+
+    .wheel.idle {
+      animation: idleSpin 4s linear infinite;
+    }
+
+    @keyframes idleSpin {
+      from {
+        transform: rotate(0deg);
+      }
+
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* Segment lines */
 
     .wheel::before {
       content: "";
@@ -139,7 +146,7 @@
       transform: rotate(-60deg);
     }
 
-    /* center */
+    /* Center */
 
     .center {
       position: absolute;
@@ -162,7 +169,7 @@
       font-size: 30px;
     }
 
-    /* POINTER */
+    /* Pointer */
 
     .pointer {
       position: absolute;
@@ -282,7 +289,7 @@
       font-size: 11px;
     }
 
-    /* Screen shake when NO wins */
+    /* Shake effect */
 
     .shake {
       animation: shake .45s;
@@ -324,15 +331,20 @@
 <div class="container" id="container">
 
   <h1>PAUSSYMETER</h1>
-  <div class="subtitle">THURSDAY FOOTBALL DETECTOR 3000</div>
 
-  <h2>Are you playing Thursday night football?</h2>
+  <div class="subtitle">
+    THURSDAY FOOTBALL DETECTOR 2026
+  </div>
+
+  <h2>
+    Are you playing Thursday night football?
+  </h2>
 
   <div class="wheel-wrapper">
 
     <div class="pointer"></div>
 
-    <div class="wheel" id="wheel">
+    <div class="wheel idle" id="wheel">
 
       <div class="label label1">
         YOU ARE<br>PAUSSY
@@ -390,15 +402,12 @@
   const again = document.getElementById("again");
   const container = document.getElementById("container");
 
-  let currentRotation = 0;
   let spinning = false;
 
 
   /*
-   * Spin to a target angle.
-   *
-   * Several complete rotations are added
-   * so the wheel has a dramatic spin.
+   * Stop continuous rotation and
+   * perform the final dramatic spin.
    */
 
   function spinTo(targetAngle, callback) {
@@ -409,15 +418,76 @@
 
     buttons.style.pointerEvents = "none";
 
+    /*
+     * Get current visible wheel angle
+     * before removing continuous animation.
+     */
+
+    const computedStyle =
+      window.getComputedStyle(wheel);
+
+    const transform =
+      computedStyle.transform;
+
+    let currentAngle = 0;
+
+    if (transform && transform !== "none") {
+
+      const values =
+        transform.match(/matrix\((.+)\)/);
+
+      if (values) {
+
+        const parts =
+          values[1].split(",");
+
+        const a = parseFloat(parts[0]);
+        const b = parseFloat(parts[1]);
+
+        currentAngle =
+          Math.atan2(b, a) *
+          (180 / Math.PI);
+
+        if (currentAngle < 0) {
+          currentAngle += 360;
+        }
+      }
+    }
+
+    /*
+     * Remove idle animation but keep
+     * wheel visually in same position.
+     */
+
+    wheel.classList.remove("idle");
+
+    wheel.style.transform =
+      `rotate(${currentAngle}deg)`;
+
+    /*
+     * Force browser to register position.
+     */
+
+    void wheel.offsetWidth;
+
+    /*
+     * Final spin
+     */
+
+    wheel.style.transition =
+      "transform 4.5s cubic-bezier(.12,.72,.15,1)";
+
     const extraSpins =
       5 + Math.floor(Math.random() * 3);
 
-    currentRotation +=
+    const finalRotation =
+      currentAngle +
       (extraSpins * 360) +
       targetAngle;
 
     wheel.style.transform =
-      `rotate(${currentRotation}deg)`;
+      `rotate(${finalRotation}deg)`;
+
 
     setTimeout(() => {
 
@@ -435,7 +505,7 @@
   /*
    * YES
    *
-   * Always lands on the football section.
+   * Always gives the football result.
    */
 
   function answerYes() {
@@ -443,13 +513,8 @@
     result.textContent =
       "CALCULATING FOOTBALL LEVEL...";
 
-    /*
-      Add a little randomness inside
-      the winning section.
-    */
-
     const target =
-      60 + Math.floor(Math.random() * 35);
+      60 + Math.floor(Math.random() * 30);
 
     spinTo(target, () => {
 
@@ -467,8 +532,8 @@
   /*
    * NO
    *
-   * Randomly choose one of
-   * the two joke outcomes.
+   * Randomly chooses between
+   * the two joke results.
    */
 
   function answerNo() {
@@ -481,12 +546,9 @@
 
     if (random) {
 
-      /*
-        PAUSSY section
-      */
-
       spinTo(
         300 + Math.floor(Math.random() * 30),
+
         () => {
 
           showResult(
@@ -502,12 +564,9 @@
 
     else {
 
-      /*
-        Second joke section
-      */
-
       spinTo(
         180 + Math.floor(Math.random() * 30),
+
         () => {
 
           showResult(
@@ -524,6 +583,10 @@
   }
 
 
+  /*
+   * Display result
+   */
+
   function showResult(text) {
 
     result.textContent = text;
@@ -539,6 +602,10 @@
   }
 
 
+  /*
+   * Screen shake
+   */
+
   function shakeScreen() {
 
     container.classList.remove("shake");
@@ -551,7 +618,7 @@
 
 
   /*
-   * Tiny fake confetti
+   * Confetti for YES
    */
 
   function confetti() {
@@ -572,16 +639,16 @@
       piece.style.height = "15px";
 
       piece.style.background =
-        `hsl(${Math.random()*360},100%,50%)`;
+        `hsl(${Math.random() * 360},100%,50%)`;
 
       piece.style.zIndex = "9999";
 
       piece.style.transform =
-        `rotate(${Math.random()*360}deg)`;
+        `rotate(${Math.random() * 360}deg)`;
 
       piece.style.transition =
-        `top ${2 + Math.random()*2}s linear,
-         transform ${2 + Math.random()*2}s linear`;
+        `top ${2 + Math.random() * 2}s linear,
+         transform ${2 + Math.random() * 2}s linear`;
 
       document.body.appendChild(piece);
 
@@ -590,18 +657,24 @@
         piece.style.top = "110vh";
 
         piece.style.transform =
-          `rotate(${720 + Math.random()*720}deg)`;
+          `rotate(${720 + Math.random() * 720}deg)`;
 
       }, 20);
 
       setTimeout(() => {
+
         piece.remove();
+
       }, 4500);
 
     }
 
   }
 
+
+  /*
+   * Restart
+   */
 
   function resetGame() {
 
@@ -614,6 +687,18 @@
     buttons.style.pointerEvents = "auto";
 
     again.classList.add("hidden");
+
+    /*
+     * Remove result-spin transition
+     * and start continuous rotation again.
+     */
+
+    wheel.style.transition = "none";
+    wheel.style.transform = "";
+
+    void wheel.offsetWidth;
+
+    wheel.classList.add("idle");
 
   }
 
